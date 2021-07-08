@@ -3,6 +3,7 @@ const BitGoHandler = require('../handler/BitGoHandler.js').BitGoHandler;
 const BitGoSmartContract = require('@bitgo/smart-contracts');
 const Compound = require('@compound-finance/compound-js');
 const Web3 = require('web3');
+const JSONCircular = require('flatted');
 
 const cDAI = BitGoSmartContract.getContractsFactory('eth').getContract('Compound').instance('cDAI');
 const cETH = BitGoSmartContract.getContractsFactory('eth').getContract('Compound').instance('cETH');
@@ -46,32 +47,64 @@ class BitgoController {
 
     async supplyAsset(amount, asset){
         if(asset == 'ETH'){
-            await this.supplyETH(amount);
+            return await this.supplyETH(amount);
         }else if(asset == 'DAI'){
-            await this.supplyDai(amount);
+            return await this.supplyDai(amount);
+        }
+    }
+
+    async redeemAsset(amount, asset){
+        if(asset == 'cETH'){
+            return await this.redeemETH(amount);
+        }else if(asset == 'cDAI'){
+            return await this.redeemDai(amount);
         }
     }
 
     async supplyETH(amount){
+        amount = (amount * Math.pow(10, 18)).toFixed();
         let param = cETH.methods().mint.call({ mintAmount: '3000000000000000000' });
         let address = Compound.util.getAddress(Compound.cETH, process.env.ETH_NETWORK);
         //let address = '0x41B5844f4680a8C38fBb695b7F9CFd1F64474a72';//cETH
-        console.log('address: ' + address);
-        console.log(param);
-        amount = (amount * Math.pow(10, 18)).toFixed();
-        console.log('amount: ' + amount);
+
+        console.log('data: ' + JSON.stringify(param));
         this.printInputData(param.data);
-        console.log('data: ' + param.data);
 
         let parameter = {
             address: address,
             amount: amount,
             data: param.data
         };
+        console.log('data parameter: ' + JSON.stringify(parameter));
 
         let currency = process.env.ETH;
 
         console.log('Start Bitgo SDK interaction');
+        await this.bitgo.unlock();
+        let transaction = await this.bitgo.sendBitGoTx([parameter], currency);
+        console.log(JSON.stringify(transaction));
+        await this.bitgo.lock();
+        return "Success";
+    }
+
+    async redeemETH(amount){
+        amount = (amount * Math.pow(10, 8)).toFixed();
+        let param = cETH.methods().redeem.call({ redeemTokens: amount });
+        let address = Compound.util.getAddress(Compound.cETH, process.env.ETH_NETWORK);
+        //let address = '0x41B5844f4680a8C38fBb695b7F9CFd1F64474a72';//cETH
+
+        console.log('data: ' + JSON.stringify(param));
+        this.printInputData(param.data);
+
+        let parameter = {
+            address: address,
+            amount: param.amount,
+            data: param.data
+        };
+        console.log('data parameter: ' + JSON.stringify(parameter));
+
+        let currency = process.env.ETH;
+
         console.log('Start Bitgo SDK interaction');
         await this.bitgo.unlock();
         let transaction = await this.bitgo.sendBitGoTx([parameter], currency);
@@ -85,32 +118,55 @@ class BitgoController {
         let param = cDAI.methods().mint.call({ mintAmount: amount });
         let address = Compound.util.getAddress(Compound.cDAI, process.env.ETH_NETWORK);
         //let address = '0xF0d0EB522cfa50B716B3b1604C4F0fA6f04376AD';//cDAI
-        console.log('address: ' + address);
-        console.log(param);
-        console.log('amount: ' + amount);
+
+        console.log('data: ' + JSON.stringify(param));
         this.printInputData(param.data);
-        console.log('data: ' + param.data);
 
         let parameter = {
             address: address,
             amount: param.amount,
             data: param.data
         };
+        console.log('data parameter: ' + JSON.stringify(parameter));
 
         let currency = process.env.ETH;
 
         console.log('Start Bitgo SDK interaction');
-        this.bitgo.unlock().then(result =>{
-            console.log(JSON.stringify(result));
-            this.bitgo.sendBitGoTx([parameter], currency).then(result => {
-                console.log(JSON.stringify(result));
-                this.bitgo.lock().then(result => {
-                    console.log(JSON.stringify(result));
-                });
-            });
-        }).catch(error => {
-            console.log('Error: ' + error);
-        });
+        await this.bitgo.unlock();
+        let transaction = await this.bitgo.sendBitGoTx([parameter], currency);
+        console.log(JSON.stringify(transaction));
+        await this.bitgo.lock();
+        return "Success";
+
+    }
+
+    async redeemDai(amount){
+
+        amount = (amount * Math.pow(10, 8)).toFixed();
+
+        let param = cDAI.methods().redeem.call({ redeemTokens: amount });
+        let address = Compound.util.getAddress(Compound.cDAI, process.env.ETH_NETWORK);
+        //let address = '0xF0d0EB522cfa50B716B3b1604C4F0fA6f04376AD';//cDAI
+
+        console.log('data: ' + JSON.stringify(param));
+        this.printInputData(param.data);
+
+        let parameter = {
+            address: address,
+            amount: param.amount,
+            data: param.data
+        };
+        console.log('data parameter: ' + JSON.stringify(parameter));
+
+        let currency = process.env.ETH;
+
+        console.log('Start Bitgo SDK interaction');
+        await this.bitgo.unlock();
+        let transaction = await this.bitgo.sendBitGoTx([parameter], currency);
+        console.log(JSON.stringify(transaction));
+        await this.bitgo.lock();
+        return 'Success';
+
     }
 
     printInputData(data){
@@ -121,7 +177,7 @@ class BitgoController {
             data = data.slice(PREFIX.length);
         }
         let result = decoder.decode(Buffer.from(data, 'hex'));
-        console.log(result);
+        console.log('Decoded Data: ' + JSON.stringify(result));
     }
 
     async getBalance(asset){
@@ -175,21 +231,6 @@ class BitgoController {
         return supplyApy;
     }
 
-    async redeemAsset(amount, asset){
-        if(asset == 'cETH'){
-            await this.redeemETH(amount);
-        }else if(asset == 'cDAI'){
-            await this.redeemDAI(amount);
-        }
-    }
-
-    async redeemETH(amount){
-        //TODO
-    }
-
-    async redeemDAI(amount){
-        //TODO
-    }
 
 
 }

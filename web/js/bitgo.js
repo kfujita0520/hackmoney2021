@@ -69,14 +69,13 @@ async function supply(asset, amount) {
     amount: amount
   };
 
-  let response = await $.ajax({
+  let response =  await $.ajax({
     type: "POST",
     url: url,
     data: data,
-    dataType: "json"
-  }).catch(err =>{
-    alert(JSON.stringify(err));
+    dataType: "json",
   });
+  console.log('AJAX POST Result: ' + JSON.stringify(response));
   return response;
 }
 
@@ -93,30 +92,53 @@ async function redeem(asset, amount) {
     url: url,
     data: data,
     dataType: "json"
-  }).catch(err =>{
-    alert(JSON.stringify(err));
   });
+  console.log('AJAX POST Result: ' + JSON.stringify(response));
   return response;
 }
 
 ethSupplyButton.onclick = async () => {
   await supply(Compound.ETH, ethSupplyInput.value).then(response =>{
-    ethSupplyInput.value = "Done";
+    if(response.result == 'Success'){
+      ethSupplyInput.value = "Done";
+    }else{
+      ethSupplyInput.value = "Error";
+    }
+
   });
 };
 
 ethRedeemButton.onclick = async () => {
-  await redeem(Compound.cETH, ethRedeemInput.value);
+  await redeem(Compound.cETH, ethRedeemInput.value).then(response =>{
+    if(response.result == 'Success'){
+      ethRedeemInput.value = "Done";
+    }else{
+      ethRedeemInput.value = "Error";
+    }
+
+  });
 };
 
 daiSupplyButton.onclick = async () => {
   await supply(Compound.DAI, daiSupplyInput.value).then(response =>{
-    daiSupplyInput.value = "Done";
+    if(response.result == 'Success'){
+      daiSupplyInput.value = "Done";
+    }else{
+      daiSupplyInput.value = "Error";
+    }
+
   });
 };
 
 daiRedeemButton.onclick = async () => {
-  await redeem(Compound.cDAI, daiRedeemInput.value);
+  await redeem(Compound.cDAI, daiRedeemInput.value).then(response =>{
+    if(response.result == 'Success'){
+      daiRedeemInput.value = "Done";
+    }else{
+      daiRedeemInput.value = "Error";
+    }
+
+  });
 };
 
 

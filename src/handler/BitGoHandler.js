@@ -65,15 +65,18 @@ class BitGoHandler {
 
         console.log('start send fund param: ' + JSON.stringify(param));
         const walletInstance = await bitGo.coin(currency).wallets().get({id: walletId});
-        console.log(JSON.stringify(walletInstance));
+        console.log('Wallet: ' + JSON.stringify(walletInstance));
 
         let transaction = await walletInstance.sendMany({
             recipients: param,
             walletPassphrase: walletpass
+        }).then(trans => {
+            console.log('SendTx: ' + JSONCircular.stringify(trans));
+            return trans;
         }).catch(error => {
-            console.log('Error1: ' + error);
+            console.log('SendBitgoTx Error: ' + error);
+            return error;
         });
-
         return transaction;
 
     }

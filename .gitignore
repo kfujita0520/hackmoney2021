@@ -1,0 +1,5 @@
+/.idea
+/bin
+/log
+/node_modules
+test/

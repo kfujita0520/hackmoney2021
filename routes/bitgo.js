@@ -27,6 +27,41 @@ router.post('/supply', function(req, res, next){
         }
         console.log(JSON.stringify(param));
         res.json(param);
+    }).catch(error => {
+        console.log('Error: ' + JSON.stringify(error));
+        let param = {
+            result: 'Error'
+        }
+        console.log(JSON.stringify(param));
+        res.json(param);
+    });
+
+});
+
+router.post('/redeem', function(req, res, next){
+
+    console.log('/bitgo/redeem POST: ' + JSON.stringify(req.body));
+
+    let ipaddr = req.socket.remoteAddress;
+    let amount = req.body.amount;
+    let asset = req.body.asset;
+
+    console.log("IP is: " + ipaddr);
+
+    let bitgoCtl = new BitgoController();
+    bitgoCtl.redeemAsset(amount, asset).then(result => {
+        let param = {
+            result: result
+        }
+        console.log(JSON.stringify(param));
+        res.json(param);
+    }).catch(error => {
+        console.log('Error: ' + JSON.stringify(error));
+        let param = {
+            result: 'Error'
+        }
+        console.log(JSON.stringify(param));
+        res.json(param);
     });
 
 });
@@ -87,20 +122,5 @@ router.post('/getBalance', function(req, res, next){
 
 });
 
-router.post('/redeem', function(req, res, next){
-
-    console.log('/bitgo/redeem POST: ' + JSON.stringify(req.body));
-
-    let ipaddr = req.socket.remoteAddress;
-    let amount = req.body.amount;
-    let asset = req.body.asset;
-
-    console.log("IP is: " + ipaddr);
-
-    let bitgoCtl = new BitgoController();
-    bitgoCtl.redeemAsset(amount, asset);
-
-    res.send(req.body);
-});
 
 module.exports = router;
